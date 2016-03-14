@@ -150,7 +150,13 @@ function testBrowser() {
       plugins: [
         // By default, webpack does `n=>n` compilation with entry files. This concatenates
         // them into a single chunk.
-        new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 })
+        new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
+        new webpack.DefinePlugin({
+          'process.env': {
+            NODE_ENV: JSON.stringify('production'),
+            APP_ENV: JSON.stringify('browser'),
+          }
+        }),
       ],
       devtool: 'inline-source-map'
     }, null, function() {
