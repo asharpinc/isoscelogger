@@ -217,4 +217,26 @@ describe('logger', () => {
       expect(error()).to.not.include(lateString);
     });
   });
+
+  describe('tap', () => {
+    it('does not interrupt Promise flow', done => {
+      const [stream, errorStream] = [newStream(), newStream()];
+      const logger = new Logger({ stream, errorStream });
+
+      const message = lorem.sentence();
+      const resolver = new Promise(res => res(message))
+        .then(logger.tap())
+        .then(s => s);
+
+      const failer = new Promise((res, rej) => rej(message))
+        .catch(logger.tapError())
+        .catch(s => s);
+
+      Promise.all([resolver, failer]).then(([resolution, failure]) => {
+        expect(resolution).to.eql(message);
+        expect(failure).to.eql(message);
+        done();
+      });
+    });
+  });
 });

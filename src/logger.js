@@ -19,19 +19,26 @@ export class LoggerStream {
   }
 
   write(line) {
-    let template = LoggerStream.DefaultTemplate;
-    if (this.template) {
-      template = this.template;
-    } else if (inBrowser && LoggerStream.BrowserTemplates[this.type]) {
-      template = LoggerStream.BrowserTemplates[this.type];
-    } else if (!inBrowser && LoggerStream.CLITemplates[this.type]) {
-      template = LoggerStream.CLITemplates[this.type];
-    } else if (LoggerStream.Templates[this.type]) {
-      template = LoggerStream.Templates[this.type];
-    }
-
-    const templatedLine = LoggerStream.templateLine(template, { line });
+    const templatedLine = LoggerStream.templateLine(this.template, { line });
     this.stream.write(templatedLine + '\n');
+  }
+
+  get template() {
+    if (this._template) {
+      return this._template;
+    } else if (inBrowser && LoggerStream.BrowserTemplates[this.type]) {
+      return LoggerStream.BrowserTemplates[this.type];
+    } else if (!inBrowser && LoggerStream.CLITemplates[this.type]) {
+      return LoggerStream.CLITemplates[this.type];
+    } else if (LoggerStream.Templates[this.type]) {
+      return LoggerStream.Templates[this.type];
+    } else {
+      return LoggerStream.DefaultTemplate;
+    }
+  }
+
+  set template(template) {
+    this._template = template;
   }
 
   static templateLine(template, data) {
@@ -52,7 +59,7 @@ export class LoggerStream {
     const character = specification[2];
     const text =
       character === 't' ? timeStamp() :
-      character === 'm' ? line :
+      character === 'm' ? line        :
       specification[0];
 
     const modifyString = specification[3];
@@ -186,6 +193,16 @@ export default class Logger {
   dump() {
     this._resetAccumulators();
     this.resume();
+  }
+
+  tap(value) {
+    this.log(value);
+    return value;
+  }
+
+  tapError(value) {
+    this.error(value);
+    return Promise.reject(value);
   }
 
   _resetAccumulators() {
