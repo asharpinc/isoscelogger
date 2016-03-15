@@ -1,14 +1,73 @@
+import colors from 'colors/safe';
+
 require('brout');
 
 const inBrowser = process.env.APP_ENV === 'browser';
+const templateRegex = /(\%(.)(((\.[\w]*))*))/g;
+
+function timeStamp() {
+  const d = new Date();
+  // convert number to two digit string
+  const two = (num) => ('0' + num).slice(-2);
+  return `${ two(d.getHours()) }:${ two(d.getMinutes()) }:${ two(d.getSeconds()) }`;
+}
 
 export class LoggerStream {
   constructor(stream, { type } = {}) {
     this.stream = stream;
+    this.type = type;
   }
 
   write(line) {
-    this.stream.write(line + '\n');
+    let template = LoggerStream.DefaultTemplate;
+    if (this.template) {
+      template = this.template;
+    } else if (inBrowser && LoggerStream.BrowserTemplates[this.type]) {
+      template = LoggerStream.BrowserTemplates[this.type];
+    } else if (!inBrowser && LoggerStream.CLITemplates[this.type]) {
+      template = LoggerStream.CLITemplates[this.type];
+    } else if (LoggerStream.Templates[this.type]) {
+      template = LoggerStream.Templates[this.type];
+    }
+
+    const templatedLine = LoggerStream.templateLine(template, { line });
+    this.stream.write(templatedLine + '\n');
+  }
+
+  static templateLine(template, data) {
+    const matches = [];
+    for (let match = templateRegex.exec(template);
+         match;
+         match = templateRegex.exec(template)) {
+      matches.push(match);
+    }
+
+    return matches.reduce((logString, match) => {
+      return logString
+        .replace(match[0], LoggerStream.convertSpecification(match, data));
+    }, template);
+  }
+
+  static convertSpecification(specification, { line }) {
+    const character = specification[2];
+    const text =
+      character === 't' ? timeStamp() :
+      character === 'm' ? line :
+      specification[0];
+
+    const modifyString = specification[3];
+    const id = (s => s);
+    const modify = modifyString.split('.').reduce((modify, modifierString) => {
+      if (colors[modifierString]) {
+        // compose new modifier onto old
+        return s => colors[modifierString](modify(s));
+      }
+
+      // throw out unknown modifiers
+      return modify;
+    }, id);
+
+    return modify(text);
   }
 }
 
@@ -16,6 +75,14 @@ LoggerStream.Type = {};
 ['ERROR', 'LOG'].forEach(type => {
   LoggerStream.Type[type] = type;
 });
+
+LoggerStream.DefaultTemplate = '[%t.dim.grey] %m';
+LoggerStream.Templates = {};
+LoggerStream.CLITemplates = {};
+LoggerStream.BrowserTemplates = {};
+
+LoggerStream.CLITemplates[LoggerStream.Type.ERROR] =
+  `[%t.dim.grey] ${ colors.red('(✗)') } %m.red`;
 
 export default class Logger {
   constructor({
@@ -126,5 +193,3 @@ export default class Logger {
     this.accumulators.errors = [];
   }
 }
-
-Logger.ERROR_PREFACE = inBrowser ? '' : '(✗)';

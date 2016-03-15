@@ -123,18 +123,6 @@ describe('logger', () => {
       expect(lines).to.have.lengthOf(errorStrings.length + 1);
       expect(lines.pop()).to.have.lengthOf(0);
     });
-
-    it('includes the error preface (when not in browser)', () => {
-      const lines = errorLog.split(/\n/);
-      expect(lines.pop().length).to.eql(0); // last line empty
-      lines.forEach(line => {
-        if (inBrowser) {
-          expect(line.indexOf(Logger.ERROR_PREFACE)).to.not.eql(0);
-        } else {
-          expect(line.indexOf(Logger.ERROR_PREFACE)).to.eql(0);
-        }
-      });
-    });
   });
 
   describe('silence', () => {
