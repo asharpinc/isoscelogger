@@ -71,7 +71,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	__webpack_require__(16);
+	if (window) {
+	  __webpack_require__(16);
+	}
 	
 	var inBrowser = process.env.APP_ENV === 'browser';
 	var templateRegex = /(\%(.)(((\.[\w]*))*))/g;

@@ -1,6 +1,8 @@
 import colors from 'colors/safe';
 
-require('brout');
+if (window) {
+  require('brout');
+}
 
 const inBrowser = process.env.APP_ENV === 'browser';
 const templateRegex = /(\%(.)(((\.[\w]*))*))/g;
