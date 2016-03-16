@@ -17,6 +17,7 @@ const $ = loadPlugins();
 // Gather the library data from `package.json`
 const config = manifest.babelBoilerplateOptions;
 const mainFile = manifest.main;
+console.log(mainFile);
 const destinationFolder = path.dirname(mainFile);
 const exportFileName = path.basename(mainFile, path.extname(mainFile));
 
