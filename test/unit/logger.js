@@ -218,6 +218,14 @@ describe('logger', () => {
     });
   });
 
+  function asyncResolver(val) {
+    return new Promise(res => setTimeout(() => res(val), 0));
+  }
+
+  function asyncFailer(val) {
+    return new Promise((res, rej) => setTimeout(() => rej(val), 0));
+  }
+
   describe('tap', () => {
     let resolver;
     let failer;
@@ -230,11 +238,11 @@ describe('logger', () => {
 
       preface = lorem.sentence();
       message = lorem.sentence();
-      resolver = new Promise(res => res(message))
+      resolver = asyncResolver(message)
         .then(logger.tap(preface))
         .then(s => s);
 
-      failer = new Promise((res, rej) => rej(message))
+      failer = asyncFailer(message)
         .catch(logger.tapError(preface))
         .catch(s => s);
     });
@@ -247,10 +255,11 @@ describe('logger', () => {
       });
     });
 
-    it('successfully logs', () => {
+    it('successfully logs', done => {
       Promise.all([resolver, failer]).then(() => {
         expect(logger.history.log[0]).to.include(preface).and.include(message);
         expect(logger.history.errors[0]).to.include(preface).and.include(message);
+        done();
       });
     });
   });

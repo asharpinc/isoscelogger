@@ -13,9 +13,10 @@ function timeStamp() {
 }
 
 export class LoggerStream {
-  constructor(stream, { type } = {}) {
+  constructor(stream, { type, template } = {}) {
     this.stream = stream;
     this.type = type;
+    this.template = template;
   }
 
   write(line) {
@@ -95,15 +96,19 @@ export default class Logger {
   constructor({
     name = '',
     stream = process.stdout,
-    errorStream = process.stderr
+    errorStream = process.stderr,
+    template,
+    errorTemplate,
   } = {}) {
     this.log = this.log.bind(this);
     this.error = this.error.bind(this);
+    this.tap = this.tap.bind(this);
+    this.tapError = this.tapError.bind(this);
 
     this.streams = [];
     this.errorStreams = [];
-    this.addStream(stream);
-    this.addErrorStream(errorStream);
+    this.addStream(stream, { template });
+    this.addErrorStream(errorStream, { template: template || errorTemplate });
     this.history = {
       errors: [],
       log: [],
@@ -195,14 +200,22 @@ export default class Logger {
     this.resume();
   }
 
-  tap(value) {
-    this.log(value);
-    return value;
+  tap(message = '%0') {
+    return val => {
+      const finalMessage = message.includes('%0') ?
+        message.replace('%0', val) : message + ': ' + val;
+      this.log(finalMessage);
+      return Promise.resolve(val);
+    };
   }
 
-  tapError(value) {
-    this.error(value);
-    return Promise.reject(value);
+  tapError(message = '%0') {
+    return val => {
+      const finalMessage = message.includes('%0') ?
+        message.replace('%0', val) : message + ': ' + val;
+      this.error(finalMessage);
+      return Promise.reject(val);
+    };
   }
 
   _resetAccumulators() {
