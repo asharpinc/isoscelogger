@@ -219,23 +219,38 @@ describe('logger', () => {
   });
 
   describe('tap', () => {
-    it('does not interrupt Promise flow', done => {
+    let resolver;
+    let failer;
+    let message;
+    let preface;
+    let logger;
+    beforeEach(() => {
       const [stream, errorStream] = [newStream(), newStream()];
-      const logger = new Logger({ stream, errorStream });
+      logger = new Logger({ stream, errorStream });
 
-      const message = lorem.sentence();
-      const resolver = new Promise(res => res(message))
-        .then(logger.tap())
+      preface = lorem.sentence();
+      message = lorem.sentence();
+      resolver = new Promise(res => res(message))
+        .then(logger.tap(preface))
         .then(s => s);
 
-      const failer = new Promise((res, rej) => rej(message))
-        .catch(logger.tapError())
+      failer = new Promise((res, rej) => rej(message))
+        .catch(logger.tapError(preface))
         .catch(s => s);
+    });
 
+    it('does not interrupt Promise flow', done => {
       Promise.all([resolver, failer]).then(([resolution, failure]) => {
         expect(resolution).to.eql(message);
         expect(failure).to.eql(message);
         done();
+      });
+    });
+
+    it('successfully logs', () => {
+      Promise.all([resolver, failer]).then(() => {
+        expect(logger.history.log[0]).to.include(preface).and.include(message);
+        expect(logger.history.errors[0]).to.include(preface).and.include(message);
       });
     });
   });
