@@ -1,10 +1,36 @@
 import colors from 'colors/safe';
 
-if (window) {
-  require('brout');
+class LightStream {
+  constructor(fn) {
+    this.fn = fn;
+  }
+
+  write(msg) {
+    this.buff += msg;
+    this.flush();
+  }
+
+  flush() {
+    const split = this.buff.split('\n');
+    this.buff = split.pop();
+    split.forEach(s => this.fn(s));
+  }
 }
 
-const inBrowser = process.env.APP_ENV === 'browser';
+let stdout;
+let stderr;
+let inBrowser;
+
+if (process && process.stdout) {
+  stdout = process.stdout;
+  stderr = process.stderr;
+  inBrowser = false;
+} else {
+  stdout = new LightStream(console.log.bind(console));
+  stderr = new LightStream(console.error.bind(console));
+  inBrowser = true;
+}
+
 const templateRegex = /(\%(.)(((\.[\w]*))*))/g;
 
 function timeStamp() {
@@ -97,8 +123,8 @@ LoggerStream.CLITemplates[LoggerStream.Type.ERROR] =
 export default class Logger {
   constructor({
     name = '',
-    stream = process.stdout,
-    errorStream = process.stderr,
+    stream = stdout,
+    errorStream = stderr,
     template,
     errorTemplate,
   } = {}) {

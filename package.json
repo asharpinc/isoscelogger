@@ -64,7 +64,6 @@
     "mainVarName": "logger"
   },
   "dependencies": {
-    "brout": "^1.1.0",
     "colors": "^1.1.2"
   }
 }
