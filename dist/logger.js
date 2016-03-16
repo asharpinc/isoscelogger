@@ -71,11 +71,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
+	_safe2.default.enabled = true;
+	
 	var LightStream = function () {
 	  function LightStream(fn) {
 	    _classCallCheck(this, LightStream);
 	
 	    this.fn = fn;
+	    this.buff = '';
 	  }
 	
 	  _createClass(LightStream, [{
@@ -92,7 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var split = this.buff.split('\n');
 	      this.buff = split.pop();
 	      split.forEach(function (s) {
-	        return _this.fn(s);
+	        return _this.fn(s || '');
 	      });
 	    }
 	  }]);
@@ -241,7 +244,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.streams = [];
 	    this.errorStreams = [];
 	    this.addStream(stream, { template: template });
-	    this.addErrorStream(errorStream, { template: template || errorTemplate });
+	    this.addErrorStream(errorStream, { template: errorTemplate || template });
 	    this.history = {
 	      errors: [],
 	      log: []

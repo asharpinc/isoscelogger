@@ -1,8 +1,10 @@
 import colors from 'colors/safe';
+colors.enabled = true;
 
 class LightStream {
   constructor(fn) {
     this.fn = fn;
+    this.buff = '';
   }
 
   write(msg) {
@@ -13,7 +15,7 @@ class LightStream {
   flush() {
     const split = this.buff.split('\n');
     this.buff = split.pop();
-    split.forEach(s => this.fn(s));
+    split.forEach(s => this.fn(s || ''));
   }
 }
 
@@ -136,7 +138,7 @@ export default class Logger {
     this.streams = [];
     this.errorStreams = [];
     this.addStream(stream, { template });
-    this.addErrorStream(errorStream, { template: template || errorTemplate });
+    this.addErrorStream(errorStream, { template: errorTemplate || template });
     this.history = {
       errors: [],
       log: [],
