@@ -134,19 +134,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    var type = _ref.type;
 	    var template = _ref.template;
+	    var namespace = _ref.namespace;
 	
 	    _classCallCheck(this, LoggerStream);
 	
 	    this.stream = stream;
 	    this.type = type;
 	    this.template = template;
+	    this.namespace = namespace;
 	  }
 	
 	  _createClass(LoggerStream, [{
 	    key: 'write',
 	    value: function write(line) {
 	      var templatedLine = LoggerStream.templateLine(this.template, { line: line });
-	      this.stream.write(templatedLine + '\n');
+	      var namespacedLine = '[' + this.namespace + '] ' + templatedLine;
+	      this.stream.write(namespacedLine + '\n');
 	    }
 	  }, {
 	    key: 'template',
@@ -233,6 +236,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var errorStream = _ref3$errorStream === undefined ? stderr : _ref3$errorStream;
 	    var template = _ref3.template;
 	    var errorTemplate = _ref3.errorTemplate;
+	    var namespace = _ref3.namespace;
 	
 	    _classCallCheck(this, Logger);
 	
@@ -240,9 +244,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.error = this.error.bind(this);
 	    this.tap = this.tap.bind(this);
 	    this.tapError = this.tapError.bind(this);
+	    this.namespace = namespace;
+	    this.errorTemplate = errorTemplate;
 	
-	    this.streams = [];
-	    this.errorStreams = [];
+	    this.template = template;
 	    this.addStream(stream, { template: template });
 	    this.addErrorStream(errorStream, { template: errorTemplate || template });
 	    this.history = {
@@ -258,9 +263,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  _createClass(Logger, [{
 	    key: 'addStream',
 	    value: function addStream(stream) {
-	      var options = arguments.length <= 1 || arguments[1] === undefined ? { type: LoggerStream.Type.LOG } : arguments[1];
+	      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 	
-	      var loggerStream = new LoggerStream(stream, options);
+	      var template = options.type === LoggerStream.Type.ERROR ? this.errorTemplate || this.template : this.template;
+	      var loggerStream = new LoggerStream(stream, Object.assign({
+	        type: LoggerStream.Type.LOG,
+	        namespace: this.namespace,
+	        template: template
+	      }, options));
+	
 	      switch (options.type) {
 	        case LoggerStream.Type.ERROR:
 	          this.errorStreams.push(loggerStream);
@@ -270,6 +281,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	          this.streams.push(loggerStream);
 	          break;
 	      }
+	    }
+	  }, {
+	    key: 'removeAllStreams',
+	    value: function removeAllStreams() {
+	      this._streams = [];
+	      this._errorStreams = [];
 	    }
 	  }, {
 	    key: 'addErrorStream',
@@ -370,6 +387,55 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.accumulators.errors = [];
 	    }
 	  }, {
+	    key: 'streams',
+	    get: function get() {
+	      return this._streams = this._streams || [];
+	    }
+	  }, {
+	    key: 'errorStreams',
+	    get: function get() {
+	      return this._errorStreams = this._errorStreams || [];
+	    }
+	  }, {
+	    key: 'namespace',
+	    set: function set(newNamespace) {
+	      this._namespace = newNamespace;
+	      var changeNamespace = function changeNamespace(s) {
+	        return s.namespace = newNamspace;
+	      };
+	      this.streams.forEach(changeNamespace);
+	      this.errorStreams.forEach(changeNamespace);
+	    },
+	    get: function get() {
+	      return this._namespace;
+	    }
+	  }, {
+	    key: 'template',
+	    set: function set(newTemplate) {
+	      this._template = newTemplate;
+	      var changeTemplate = function changeTemplate(s) {
+	        return s.template = newTemplate;
+	      };
+	      this.streams.forEach(changeTemplate);
+	      if (!this.errorTemplate) {
+	        this.errorStreams.forEach(changeTemplate);
+	      }
+	    },
+	    get: function get() {
+	      return this._template;
+	    }
+	  }, {
+	    key: 'errorTemplate',
+	    set: function set(newTemplate) {
+	      this._errorTemplate = newTemplate;
+	      this.errorStreams.forEach(function (s) {
+	        return s.template = newTemplate;
+	      });
+	    },
+	    get: function get() {
+	      return this._errorTemplate;
+	    }
+	  }, {
 	    key: 'paused',
 	    get: function get() {
 	      return this._paused;
@@ -381,6 +447,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.resume();
 	      }
 	      return this.paused;
+	    }
+	  }], [{
+	    key: 'instance',
+	    value: function instance(namespace) {
+	      var create = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+	
+	      if (!this._instances) {
+	        this._instances = {};
+	      }
+	
+	      if (!this._instances[namespace] && create) {
+	        this._instances[namespace] = new Logger({ namespace: namespace });
+	      }
+	
+	      return this._instances[namespace];
+	    }
+	  }, {
+	    key: 'setInstance',
+	    value: function setInstance(namespace, logger) {
+	      this._instances[namespace] = logger;
 	    }
 	  }]);
 	

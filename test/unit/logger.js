@@ -263,4 +263,67 @@ describe('logger', () => {
       });
     });
   });
+
+  describe('instance', () => {
+    let spaceName;
+    let instance;
+
+    beforeEach(() => {
+      spaceName = lorem.words(1)[0];
+      instance = Logger.instance(spaceName);
+    });
+
+    it('has a namespace', () => {
+      expect(instance.namespace).to.eql(spaceName);
+    });
+
+    it('namespaces the streams', () => {
+      instance.removeAllStreams();
+      instance.addStream(newStream());
+      instance.addErrorStream(newStream());
+
+      const message = lorem.sentence();
+      instance.log(message);
+      instance.error(message);
+
+      const [log, error] = [
+        instance.streams[0].stream.getContentsAsString(),
+        instance.errorStreams[0].stream.getContentsAsString(),
+      ];
+
+      expect(log).to.include(message).and.include(spaceName);
+      expect(error).to.include(message).and.include(spaceName);
+    });
+
+    it('always returns the same instance', () => {
+      expect(Logger.instance(spaceName)).to.eql(instance);
+    });
+
+    it('allows for templating but always includes the namespace', () => {
+      const template = lorem.sentence();
+      instance.template = template;
+      instance.removeAllStreams();
+      instance.addStream(newStream());
+      instance.addErrorStream(newStream());
+
+      const message = lorem.sentence();
+      instance.log(message);
+      instance.error(message);
+
+      const [log, error] = [
+        instance.streams[0].stream.getContentsAsString(),
+        instance.errorStreams[0].stream.getContentsAsString(),
+      ];
+
+      expect(log, 'log uses template and namespace')
+        .to.include(template)
+        .and.include(spaceName)
+        .and.not.include(message);
+
+      expect(error, 'error uses template and namespace')
+        .to.include(template)
+        .and.include(spaceName)
+        .and.not.include(message);
+    });
+  });
 });

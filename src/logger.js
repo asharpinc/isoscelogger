@@ -43,15 +43,17 @@ function timeStamp() {
 }
 
 export class LoggerStream {
-  constructor(stream, { type, template } = {}) {
+  constructor(stream, { type, template, namespace } = {}) {
     this.stream = stream;
     this.type = type;
     this.template = template;
+    this.namespace = namespace;
   }
 
   write(line) {
     const templatedLine = LoggerStream.templateLine(this.template, { line });
-    this.stream.write(templatedLine + '\n');
+    const namespacedLine = `[${ this.namespace }] ${ templatedLine }`;
+    this.stream.write(namespacedLine + '\n');
   }
 
   get template() {
@@ -129,14 +131,16 @@ export default class Logger {
     errorStream = stderr,
     template,
     errorTemplate,
+    namespace,
   } = {}) {
     this.log = this.log.bind(this);
     this.error = this.error.bind(this);
     this.tap = this.tap.bind(this);
     this.tapError = this.tapError.bind(this);
+    this.namespace = namespace;
+    this.errorTemplate = errorTemplate;
 
-    this.streams = [];
-    this.errorStreams = [];
+    this.template = template;
     this.addStream(stream, { template });
     this.addErrorStream(errorStream, { template: errorTemplate || template });
     this.history = {
@@ -149,8 +153,39 @@ export default class Logger {
     this.paused = false;
   }
 
-  addStream(stream, options = { type: LoggerStream.Type.LOG }) {
-    const loggerStream = new LoggerStream(stream, options);
+  static instance(namespace, create = true) {
+    if (!this._instances) {
+      this._instances = {};
+    }
+
+    if (!this._instances[namespace] && create) {
+      this._instances[namespace] = new Logger({ namespace });
+    }
+
+    return this._instances[namespace];
+  }
+
+  static setInstance(namespace, logger) {
+    this._instances[namespace] = logger;
+  }
+
+  get streams() {
+    return this._streams = this._streams || [];
+  }
+
+  get errorStreams() {
+    return this._errorStreams = this._errorStreams || [];
+  }
+
+  addStream(stream, options = { }) {
+    const template = options.type === LoggerStream.Type.ERROR ?
+      this.errorTemplate || this.template : this.template;
+    const loggerStream = new LoggerStream(stream, Object.assign({
+      type: LoggerStream.Type.LOG,
+      namespace: this.namespace,
+      template
+    }, options));
+
     switch (options.type) {
       case LoggerStream.Type.ERROR:
         this.errorStreams.push(loggerStream);
@@ -160,6 +195,11 @@ export default class Logger {
         this.streams.push(loggerStream);
         break;
     }
+  }
+
+  removeAllStreams() {
+    this._streams = [];
+    this._errorStreams = [];
   }
 
   addErrorStream(stream, options) {
@@ -191,6 +231,39 @@ export default class Logger {
     }
 
     this.errorStreams.forEach(s => s.write(str));
+  }
+
+  set namespace(newNamespace) {
+    this._namespace = newNamespace;
+    const changeNamespace = (s => s.namespace = newNamspace);
+    this.streams.forEach(changeNamespace);
+    this.errorStreams.forEach(changeNamespace);
+  }
+
+  get namespace() {
+    return this._namespace;
+  }
+
+  set template(newTemplate) {
+    this._template = newTemplate;
+    const changeTemplate = (s => s.template = newTemplate);
+    this.streams.forEach(changeTemplate);
+    if (!this.errorTemplate) {
+      this.errorStreams.forEach(changeTemplate);
+    }
+  }
+
+  get template() {
+    return this._template;
+  }
+
+  set errorTemplate(newTemplate) {
+    this._errorTemplate = newTemplate;
+    this.errorStreams.forEach(s => s.template = newTemplate);
+  }
+
+  get errorTemplate() {
+    return this._errorTemplate;
   }
 
   silence() {
