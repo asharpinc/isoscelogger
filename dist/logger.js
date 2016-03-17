@@ -401,7 +401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    set: function set(newNamespace) {
 	      this._namespace = newNamespace;
 	      var changeNamespace = function changeNamespace(s) {
-	        return s.namespace = newNamspace;
+	        return s.namespace = newNamespace;
 	      };
 	      this.streams.forEach(changeNamespace);
 	      this.errorStreams.forEach(changeNamespace);

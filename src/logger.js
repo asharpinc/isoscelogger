@@ -235,7 +235,7 @@ export default class Logger {
 
   set namespace(newNamespace) {
     this._namespace = newNamespace;
-    const changeNamespace = (s => s.namespace = newNamspace);
+    const changeNamespace = (s => s.namespace = newNamespace);
     this.streams.forEach(changeNamespace);
     this.errorStreams.forEach(changeNamespace);
   }

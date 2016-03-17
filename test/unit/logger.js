@@ -295,6 +295,23 @@ describe('logger', () => {
       expect(error).to.include(message).and.include(spaceName);
     });
 
+    it('reactively changes stream namespacing', () => {
+      instance.removeAllStreams();
+      instance.addStream(newStream());
+      instance.addStream(newStream());
+      instance.addErrorStream(newStream());
+      instance.addErrorStream(newStream());
+
+      const newNamespace = lorem.words(1)[0];
+      instance.namespace = newNamespace;
+      instance.streams.forEach(s => {
+        expect(s.namespace).to.eql(newNamespace);
+      });
+      instance.errorStreams.forEach(s => {
+        expect(s.namespace).to.eql(newNamespace);
+      });
+    });
+
     it('always returns the same instance', () => {
       expect(Logger.instance(spaceName)).to.eql(instance);
     });
