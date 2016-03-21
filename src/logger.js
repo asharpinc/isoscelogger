@@ -1,5 +1,9 @@
-import colors from 'colors/safe';
+import colors from 'chalk';
 colors.enabled = true;
+
+const colorFunctions =
+  ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray']
+  .map(c => colors[c]);
 
 class LightStream {
   constructor(fn) {
@@ -52,7 +56,13 @@ export class LoggerStream {
 
   write(line) {
     const templatedLine = LoggerStream.templateLine(this.template, { line });
-    const namespacedLine = `[${ this.namespace }] ${ templatedLine }`;
+    let formattedNamespace = '';
+    if (this.namespace) {
+      const colorIndex = hashCode(this.namespace) % colorFunctions.length;
+      const colorFunction = colorFunctions[colorIndex] || (id => id);
+      formattedNamespace = `[${ colorFunction(this.namespace) }] `;
+    }
+    const namespacedLine = `${ formattedNamespace }${ templatedLine }`;
     this.stream.write(namespacedLine + '\n');
   }
 
@@ -83,8 +93,7 @@ export class LoggerStream {
     }
 
     return matches.reduce((logString, match) => {
-      return logString
-        .replace(match[0], LoggerStream.convertSpecification(match, data));
+      return logString.replace(match[0], LoggerStream.convertSpecification(match, data));
     }, template);
   }
 
@@ -325,4 +334,16 @@ export default class Logger {
     this.accumulators.logs = [];
     this.accumulators.errors = [];
   }
+}
+
+function hashCode(s) {
+  if (s.length === 0) {
+    return hash;
+  }
+  let hash = 0;
+  for (let i = 0; i < s.length; ++i) {
+    const chr = s.charCodeAt(i);
+    hash = (((hash << 5) - hash) + chr) | 0;
+  }
+  return hash;
 }

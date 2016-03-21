@@ -344,3 +344,14 @@ describe('logger', () => {
     });
   });
 });
+
+const eyeTestLogger = new Logger();
+eyeTestLogger.log('This is a log');
+eyeTestLogger.error('This is an error');
+eyeTestLogger.namespace = 'test namespace';
+eyeTestLogger.log('This is a namespaced log');
+eyeTestLogger.error('This is a namespaced error');
+eyeTestLogger.template = '(%t.rainbow) %m.underline';
+eyeTestLogger.errorTemplate = '(%t.red.bold) %m.yellow';
+eyeTestLogger.log('This is a templated log');
+eyeTestLogger.error('This is a templated error');
