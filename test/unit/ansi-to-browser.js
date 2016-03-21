@@ -7,14 +7,21 @@ describe('ansiToBrowser', () => {
     const someText = faker.lorem.sentence();
     const args = ansiToBrowser(colors.red(someText));
     expect(args[0]).to.eql(`%c${ someText }`);
-    expect(args[1]).to.include('color: red;').and.not.include('backgroundColor').and.not.include('fontWeight');
+    expect(args[1]).to.include('color: red;').and.not.include('background-color').and.not.include('font-weight');
+  });
+
+  it('handles gray properly', () => {
+    const someText = faker.lorem.sentence();
+    const args = ansiToBrowser(colors.gray(someText));
+    expect(args[0]).to.eql(`%c${ someText }`);
+    expect(args[1]).to.include('color: gray;').and.not.include('background-color').and.not.include('font-weight');
   });
 
   it('converts multiple colors', () => {
     const someText = faker.lorem.sentence();
     const args = ansiToBrowser(colors.red.bgGreen(someText));
     expect(args[0]).to.eql(`%c${ someText }`);
-    expect(args[1]).to.include('color: red;').and.include('backgroundColor: green;');
+    expect(args[1]).to.include('color: red;').and.include('background-color: green;');
   });
 
   it('resets properly', () => {
@@ -32,8 +39,8 @@ describe('ansiToBrowser', () => {
     const ansiEncoded = colors.green(greenText) + colors.bgRed(redBackgroundText);
     const args = ansiToBrowser(ansiEncoded);
     expect(args[0]).to.eql(`%c${ greenText }%c${ redBackgroundText }`);
-    expect(args[1]).to.include('color: green;').and.not.include('backgroundColor');
-    expect(args[2]).to.include('backgroundColor: red;').and.not.include('color');
+    expect(args[1]).to.include('color: green;').and.not.include('background-color');
+    expect(args[2]).to.include('background-color: red;').and.not.include('green');
   });
 
   it('handles semicolons properly', () => {
@@ -41,5 +48,10 @@ describe('ansiToBrowser', () => {
     const first = `\u001b[1m\u001b[30m${ text }`;
     const second = `\u001b[1;30m${ text }`;
     expect(ansiToBrowser(first)).to.deep.eql(ansiToBrowser(second));
+  });
+
+  it('behaves properly with normal strings', () => {
+    const text = faker.lorem.sentence();
+    expect(ansiToBrowser(text)).to.deep.eql([text]);
   });
 });

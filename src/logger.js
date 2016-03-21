@@ -1,22 +1,39 @@
 import colors from 'chalk';
+import ansiToBrowser from './ansi-to-browser';
 colors.enabled = true;
 
+const inBrowser = !(process && process.stdout);
 const colorFunctions =
   ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray']
   .map(c => colors[c]);
 
 class LightStream {
-  constructor(fn) {
-    this.fn = fn;
-    this.buff = '';
+  constructor(fn, applied = false) {
+    this.applied = applied;
+    if (applied) {
+      this.fn = (args) => fn(...args);
+      this.buff = [];
+    } else {
+      this.fn = fn;
+      this.buff = '';
+    }
   }
 
   write(msg) {
-    this.buff += msg;
+    const payload = inBrowser ? ansiToBrowser(msg) : msg;
+    if (this.applied) {
+      this.buff.push(payload);
+    } else {
+      this.buff += payload;
+    }
+
     this.flush();
   }
 
   flush() {
+    if (this.applied) {
+      return this.buff.forEach(this.fn);
+    }
     const split = this.buff.split('\n');
     this.buff = split.pop();
     split.forEach(s => this.fn(s || ''));
@@ -25,16 +42,13 @@ class LightStream {
 
 let stdout;
 let stderr;
-let inBrowser;
 
 if (process && process.stdout) {
   stdout = process.stdout;
   stderr = process.stderr;
-  inBrowser = false;
 } else {
-  stdout = new LightStream(console.log.bind(console));
-  stderr = new LightStream(console.error.bind(console));
-  inBrowser = true;
+  stdout = new LightStream(console.log.bind(console), true);
+  stderr = new LightStream(console.error.bind(console), true);
 }
 
 const templateRegex = /(\%(.)(((\.[\w]*))*))/g;

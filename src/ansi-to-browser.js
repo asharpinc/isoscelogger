@@ -12,7 +12,7 @@ export default function ansiToBrowser(ansiEncodedString) {
   const splits = ansiEncodedString.split(testRegex).filter(s => s.length > 0);
   const initialState = {
     segments: [''],
-    style: {
+    styles: {
       color: '',
       backgroundColor: '',
       fontWeight: '',
@@ -55,9 +55,15 @@ function allMatches(regex, string) {
 function stringToAction(piece) {
   return state => {
     const [string, ...styles] = state.segments;
-    return Object.assign({}, state, {
-      segments: [`${ string }%c${ piece }`, ...styles, cssFromStyles(state.styles)],
-    });
+    const newCSS = cssFromStyles(state.styles);
+    let segments;
+    // first string, unstyled
+    if (styles.length === 0 && newCSS.length === 0) {
+      segments = [`${ string }${ piece }`];
+    } else {
+      segments = [`${ string }%c${ piece }`, ...styles, newCSS];
+    }
+    return Object.assign({}, state, { segments });
   };
 }
 
@@ -79,11 +85,20 @@ function escapeCodeToAction(code) {
   };
 }
 
+function normalizedCSSProperty(propName) {
+  switch (propName) {
+  case 'textDecoration': return 'text-decoration';
+  case 'fontWeight': return 'font-weight';
+  case 'backgroundColor': return 'background-color';
+  default: return propName;
+  }
+}
+
 function cssFromStyles(styles) {
   return Object.keys(styles).map(property => {
     const value = styles[property];
     if (value.length > 0) {
-      return `${ property }: ${ value };`;
+      return `${ normalizedCSSProperty(property) }: ${ value };`;
     }
 
     return '';
@@ -118,6 +133,7 @@ function numberToStyles(number) {
   case 45: return { backgroundColor: 'magenta' };
   case 46: return { backgroundColor: 'cyan' };
   case 47: return { backgroundColor: 'white' };
+  case 90: return { color: 'gray' };
   default: return {};
   }
 }
