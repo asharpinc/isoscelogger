@@ -8,8 +8,9 @@ const colorFunctions =
   .map(c => colors[c]);
 
 class LightStream {
-  constructor(fn, applied = false) {
+  constructor(fn, { applied = false, output = 'ansi' } = {}) {
     this.applied = applied;
+    this.output = output;
     if (applied) {
       this.fn = (args) => fn(...args);
       this.buff = [];
@@ -20,7 +21,9 @@ class LightStream {
   }
 
   write(msg) {
-    const payload = inBrowser ? ansiToBrowser(msg) : msg;
+    const payload =
+      this.output === 'browser' ? ansiToBrowser(msg)
+      : msg;
     if (this.applied) {
       this.buff.push(payload);
     } else {
@@ -43,12 +46,12 @@ class LightStream {
 let stdout;
 let stderr;
 
-if (process && process.stdout) {
+if (!inBrowser) {
   stdout = process.stdout;
   stderr = process.stderr;
 } else {
-  stdout = new LightStream(console.log.bind(console), true);
-  stderr = new LightStream(console.error.bind(console), true);
+  stdout = new LightStream(console.log.bind(console), { applied: true, output: 'browser' });
+  stderr = new LightStream(console.error.bind(console), { applied: true, output: 'browser' });
 }
 
 const templateRegex = /(\%(.)(((\.[\w]*))*))/g;
