@@ -179,6 +179,10 @@ export default class Logger {
     this.paused = false;
   }
 
+  static get inBrowser() {
+    return inBrowser;
+  }
+
   static instance(namespace, create = true) {
     if (!this._instances) {
       this._instances = {};
