@@ -509,6 +509,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function setInstance(namespace, logger) {
 	      this._instances[namespace] = logger;
 	    }
+	  }, {
+	    key: 'inBrowser',
+	    get: function get() {
+	      return inBrowser;
+	    }
 	  }]);
 	
 	  return Logger;
