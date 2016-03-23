@@ -2,6 +2,8 @@ import colors from 'chalk';
 import ansiToBrowser from './ansi-to-browser';
 colors.enabled = true;
 
+const process = global.process || process;
+
 const inBrowser = !(process && process.stdout);
 const colorFunctions =
   ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'gray']
