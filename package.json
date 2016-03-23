@@ -1,6 +1,6 @@
 {
   "name": "isoscelogger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "An isomorphic, colorful logger",
   "main": "dist/logger.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/asharpinc/logger.git"
+    "url": "https://github.com/asharpinc/isoscelogger.git"
   },
   "keywords": [
     "isomorphic",
